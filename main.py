@@ -26,10 +26,10 @@ def main() -> None:
 
     prompt: str = sys.argv[1]
     client: genai.Client = genai.Client(api_key=api_key)
-
     messages: list[types.Content] = [
         types.Content(role="user", parts=[types.Part(text=prompt)])
     ]
+
     response: GenerateContentResponse = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=messages,
@@ -38,13 +38,16 @@ def main() -> None:
             "response_schema": Response,
         },
     )
+    if response.text is None:
+        raise RuntimeError("Gemini returned an empty response")
 
     parsed: Response = Response.model_validate_json(response.text)
     print(f"Answer: {parsed.answer}")
     if verbose_flag:
         print(f"User prompt: {prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+        if response.usage_metadata is not None:
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         print(f"Confidence: {parsed.confidence}")
 
 
