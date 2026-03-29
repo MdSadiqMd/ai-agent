@@ -1,4 +1,5 @@
 import os
+import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai.types import GenerateContentResponse
@@ -11,17 +12,17 @@ class Response(BaseModel):
 
 
 def main() -> None:
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <prompt>")
+        sys.exit(2)
+
     load_dotenv()
     api_key: str | None = os.environ.get("GEMINI_API_KEY")
     if api_key is None:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
+    prompt: str = sys.argv[1]
     client: genai.Client = genai.Client(api_key=api_key)
-    prompt: str = (
-        "Why is Boot.dev such a great place to learn backend development? "
-        "Use one paragraph maximum."
-    )
-
     response: GenerateContentResponse = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
