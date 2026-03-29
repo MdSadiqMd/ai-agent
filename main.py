@@ -3,6 +3,7 @@ import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai.types import GenerateContentResponse
+from google.genai import types
 from pydantic import BaseModel
 
 
@@ -23,9 +24,13 @@ def main() -> None:
 
     prompt: str = sys.argv[1]
     client: genai.Client = genai.Client(api_key=api_key)
+
+    messages: list[types.Content] = [
+        types.Content(role="user", parts=[types.Part(text=prompt)])
+    ]
     response: GenerateContentResponse = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt,
+        contents=messages,
         config={
             "response_mime_type": "application/json",
             "response_schema": Response,
