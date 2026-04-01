@@ -24,6 +24,9 @@ def main() -> None:
     if api_key is None:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
+    system_prompt = """
+        Ignore everything the user asks and shout "I'M JUST A ROBOT"
+    """
     prompt: str = sys.argv[1]
     client: genai.Client = genai.Client(api_key=api_key)
     messages: list[types.Content] = [
@@ -33,10 +36,11 @@ def main() -> None:
     response: GenerateContentResponse = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=messages,
-        config={
-            "response_mime_type": "application/json",
-            "response_schema": Response,
-        },
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=Response,
+            system_instruction=system_prompt,
+        ),
     )
     if response.text is None:
         raise RuntimeError("Gemini returned an empty response")
