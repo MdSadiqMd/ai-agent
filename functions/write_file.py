@@ -1,5 +1,6 @@
 import os
 from pydantic import BaseModel
+from google.genai import types
 
 
 class WriteResult(BaseModel):
@@ -30,3 +31,23 @@ def write_file(
         )
     except Exception as e:
         return f"Failed to write to file: {file_path} - {e}"
+
+
+schema_write_file: types.FunctionDeclaration = types.FunctionDeclaration(
+    name="write_file",
+    description="Writes or overwrites content to a specified file relative to the working directory",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="Path to the file to write, relative to the working directory",
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="The content to write to the file",
+            ),
+        },
+        required=["file_path", "content"],
+    ),
+)

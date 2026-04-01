@@ -1,6 +1,6 @@
 import os
-
 from pydantic import BaseModel
+from google.genai import types
 
 MAX_CHARS: int = 10000
 
@@ -36,3 +36,19 @@ def get_file_content(working_directory: str, file_path: str) -> FileContent | st
         )
     except Exception as e:
         return f"Exception reading file: {e}"
+
+
+schema_get_file_content: types.FunctionDeclaration = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Reads and returns the content of a specified file relative to the working directory",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="Path to the file to read, relative to the working directory",
+            ),
+        },
+        required=["file_path"],
+    ),
+)

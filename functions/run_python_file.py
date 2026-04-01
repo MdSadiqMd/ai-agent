@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pydantic import BaseModel
+from google.genai import types
 
 
 class PythonResult(BaseModel):
@@ -56,3 +57,24 @@ def run_python_file(
 
     except Exception as e:
         return f"Error: executing Python file: {e}"
+
+
+schema_run_python_file: types.FunctionDeclaration = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Executes a Python file with optional command-line arguments and returns the output",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="Path to the Python file to execute, relative to the working directory",
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                description="Optional list of command-line arguments to pass to the script",
+                items=types.Schema(type=types.Type.STRING),
+            ),
+        },
+        required=["file_path"],
+    ),
+)
