@@ -5,7 +5,7 @@ from google import genai
 from google.genai import types
 from google.genai.types import GenerateContentResponse
 from pydantic import BaseModel
-from functions.call_function import available_functions
+from functions.call_function import available_functions, call_function
 
 
 class Part(BaseModel):
@@ -59,16 +59,24 @@ as it is automatically injected for security reasons.
     )
 
     if response.function_calls:
-        for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
+        function_results: list[types.Part] = []
+        for fc in response.function_calls:
+            function_call_result: types.Content = call_function(
+                fc, verbose=verbose_flag
+            )
+            if not function_call_result.parts:
+                raise RuntimeError("Function call returned no parts")
+
+            function_response = function_call_result.parts[0].function_response
+            if function_response is None:
+                raise RuntimeError("Function call returned no function_response")
+            if function_response.response is None:
+                raise RuntimeError("Function call returned no response")
+
+            function_results.append(function_call_result.parts[0])
+            if verbose_flag:
+                print(f"-> {function_response.response}")
     else:
-        if verbose_flag:
-            print(f"User prompt: {prompt}")
-            if response.usage_metadata is not None:
-                print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-                print(
-                    f"Response tokens: {response.usage_metadata.candidates_token_count}"
-                )
         print(response.text)
 
 
