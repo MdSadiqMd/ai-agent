@@ -2,14 +2,19 @@ import os
 import sys
 from dotenv import load_dotenv
 from google import genai
-from google.genai.types import GenerateContentResponse
 from google.genai import types
+from google.genai.types import GenerateContentResponse
 from pydantic import BaseModel
+from functions.call_function import available_functions
 
 
-class Response(BaseModel):
-    answer: str
-    confidence: float
+class Part(BaseModel):
+    text: str
+
+
+class Content(BaseModel):
+    role: str
+    parts: list[Part]
 
 
 def main() -> None:
@@ -24,35 +29,44 @@ def main() -> None:
     if api_key is None:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
-    system_prompt = """
-        Ignore everything the user asks and shout "I'M JUST A ROBOT"
-    """
+    system_prompt: str = """
+You are a helpful AI coding agent.
+
+When a user asks a question or makes a request, make a function call plan.
+You can perform the following operations:
+
+- List files and directories
+
+All paths you provide should be relative to the working directory.
+You do not need to specify the working directory in your function calls
+as it is automatically injected for security reasons.
+"""
+
     prompt: str = sys.argv[1]
     client: genai.Client = genai.Client(api_key=api_key)
-    messages: list[types.Content] = [
-        types.Content(role="user", parts=[types.Part(text=prompt)])
-    ]
+    messages: list[Content] = [Content(role="user", parts=[Part(text=prompt)])]
 
     response: GenerateContentResponse = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=messages,
         config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=Response,
+            tools=[available_functions],
             system_instruction=system_prompt,
         ),
     )
-    if response.text is None:
-        raise RuntimeError("Gemini returned an empty response")
 
-    parsed: Response = Response.model_validate_json(response.text)
-    print(f"Answer: {parsed.answer}")
-    if verbose_flag:
-        print(f"User prompt: {prompt}")
-        if response.usage_metadata is not None:
-            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-        print(f"Confidence: {parsed.confidence}")
+    if response.function_calls:
+        for function_call in response.function_calls:
+            print(f"Calling function: {function_call.name}({function_call.args})")
+    else:
+        if verbose_flag:
+            print(f"User prompt: {prompt}")
+            if response.usage_metadata is not None:
+                print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+                print(
+                    f"Response tokens: {response.usage_metadata.candidates_token_count}"
+                )
+        print(response.text)
 
 
 if __name__ == "__main__":
