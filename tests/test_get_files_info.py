@@ -1,3 +1,7 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from functions.get_files_info import get_files_info, FileInfo
 
 

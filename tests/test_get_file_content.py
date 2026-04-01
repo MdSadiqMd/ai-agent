@@ -1,3 +1,7 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from functions.get_file_content import get_file_content, FileContent
 
 
