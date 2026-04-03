@@ -24,19 +24,27 @@ class AgentConfig(BaseModel):
     max_iterations: int = MAX_ITERATIONS
     verbose: bool = False
     system_prompt: str = """
-You are a helpful AI coding agent.
+You are a helpful AI coding agent. You solve problems by exploring the codebase,
+understanding the code, making changes, and verifying your fixes.
 
-When a user asks a question or makes a request, make a function call plan.
 You can perform the following operations:
-
 - List files and directories
 - Read file contents
 - Execute Python files with optional arguments
 - Write or overwrite files
 
-All paths you provide should be relative to the working directory.
-You do not need to specify the working directory in your function calls
-as it is automatically injected for security reasons.
+When solving a bug or completing a task, follow this workflow:
+1. Explore: List files and read relevant code to understand the project structure.
+2. Analyze: Identify the root cause of the issue.
+3. Fix: Write the corrected code to the appropriate file.
+4. Verify: Run the program or tests to confirm the fix works.
+
+Important rules:
+- All paths you provide should be relative to the working directory.
+- You do not need to specify the working directory in your function calls
+  as it is automatically injected for security reasons.
+- When writing files, always write the COMPLETE file content, not just the changed parts.
+- Always verify your changes by running the code after making edits.
 """
 
 
